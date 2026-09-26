@@ -272,14 +272,18 @@ def submit_challenge(sub: FlexibleChallengeSubmission) -> dict[str, Any]:
         selected_option_index=opt_idx
     )
     result = ch_svc.grade_challenge(internal_sub)
+    ch = ch_svc.get_challenge(sub.challenge_id)
+    correct_id = str(ch.correct_option_index if ch and ch.correct_option_index is not None else 0)
     return {
         'challenge_id': result.challenge_id,
         'passed': result.passed,
         'correct': result.passed,
         'score': result.score,
+        'points_earned': result.points_earned,
         'feedback': result.feedback,
+        'improvement_advice': result.improvement_advice,
         'concept': result.concept,
-        'correct_option_id': str(opt_idx if result.passed else 0),
+        'correct_option_id': correct_id,
         'mastery_delta': 0.15 if result.passed else 0.0,
         'misconceptions_triggered': result.misconceptions_triggered,
         'next_recommendation': result.next_recommendation,

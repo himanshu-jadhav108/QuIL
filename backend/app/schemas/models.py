@@ -166,6 +166,8 @@ class Challenge(BaseModel):
     options: list[str] | None = None
     correct_option_index: int | None = None
     explanation: str
+    points: int = 100
+    improvement_tip: str | None = None
 
 class ChallengeSubmission(BaseModel):
     challenge_id: str
@@ -181,6 +183,8 @@ class ChallengeResult(BaseModel):
     concept: str
     misconceptions_triggered: list[str] = Field(default_factory=list)
     next_recommendation: str
+    points_earned: int = 0
+    improvement_advice: str | None = None
 
 class MasteryLevel(str, Enum):
     LEARNING = 'Learning'

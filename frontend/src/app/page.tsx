@@ -280,13 +280,12 @@ export default function Home() {
 
   const handleSubmitAnswer = useCallback(
     async (challengeId: string, answerId: string) => {
-      if (!simResult) return;
       try {
         const res = await submitAnswer({
           challenge_id: challengeId,
           selected_option_id: answerId,
-          concept: simResult.concept,
-          simulation_result: simResult,
+          concept: simResult?.concept || selectedConcept,
+          simulation_result: simResult || undefined,
         });
         setChallengeResult(res);
         const m = await getMastery();
@@ -295,7 +294,7 @@ export default function Home() {
         /* noop */
       }
     },
-    [simResult]
+    [simResult, selectedConcept]
   );
 
   /* ── MASTERY BOOT ───────────────────────────────────────────────── */

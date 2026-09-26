@@ -126,15 +126,17 @@ export interface Challenge {
   concept: ConceptName;
   difficulty: string;
   prompt: string;
-  options: ChallengeOption[];
+  options: ChallengeOption[] | string[];
   explanation?: string;
+  points?: number;
+  improvement_tip?: string;
 }
 
 export interface SubmitAnswerRequest {
   challenge_id: string;
   selected_option_id: string;
   concept: ConceptName;
-  simulation_result: SimulationResult;
+  simulation_result?: SimulationResult;
 }
 
 export interface SubmitAnswerResponse {
@@ -143,6 +145,9 @@ export interface SubmitAnswerResponse {
   feedback: string;
   correct_option_id?: string;
   mastery_delta?: number;
+  points_earned?: number;
+  improvement_advice?: string;
+  next_recommendation?: string;
 }
 
 // ─── Mastery ─────────────────────────────────────────────────────────────────
