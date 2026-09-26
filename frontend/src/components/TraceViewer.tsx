@@ -1,6 +1,6 @@
 import React from 'react';
 import { TraceStep } from '../types/quantum';
-import { Activity, ArrowDown, ChevronRight, Layers } from 'lucide-react';
+import { Layers } from 'lucide-react';
 
 interface TraceViewerProps {
   trace: TraceStep[];

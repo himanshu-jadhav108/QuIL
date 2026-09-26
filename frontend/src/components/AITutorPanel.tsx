@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { SimulationResult, TutorResponse, ConceptName } from '../types/quantum';
-import { MessageSquare, Send, Lightbulb, Sparkles, AlertCircle, HelpCircle, CheckCircle2 } from 'lucide-react';
+import { MessageSquare, Send, Lightbulb, HelpCircle } from 'lucide-react';
 
 interface Props {
   simResult: SimulationResult | null;
@@ -24,6 +24,18 @@ interface ChatMessage {
   suggestedActions?: string[];
 }
 
+const getWelcomeMessage = (c: ConceptName): string => {
+  const welcomeMessages: Record<ConceptName, string> = {
+    superposition:
+      'Hello! I am QuIL, your quantum learning assistant. Ask me anything about the Hadamard gate, how probability amplitudes form equal superpositions, or why a qubit has no predetermined classical value before measurement.',
+    measurement:
+      'Hello! I am QuIL. I am here to clarify how quantum measurement works. Ask me about projective operators, Born rule probabilities, or why measurement irreversibly collapses the quantum state.',
+    entanglement:
+      'Hello! I am QuIL. Ask me about the Bell state, non-separable composite wavefunctions, CNOT entanglement mechanics, or why quantum correlation cannot transmit faster-than-light signals.',
+  };
+  return welcomeMessages[c] || welcomeMessages.superposition;
+};
+
 export const AITutorPanel: React.FC<Props> = ({
   simResult,
   tutorResponse,
@@ -35,51 +47,65 @@ export const AITutorPanel: React.FC<Props> = ({
   concept = 'superposition',
   onNavigateToResults,
 }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
+    {
+      id: 'welcome',
+      sender: 'quil',
+      text: getWelcomeMessage(concept),
+      time: '12:00 PM',
+    },
+  ]);
   const chatBottomRef = useRef<HTMLDivElement>(null);
+  const prevConceptRef = useRef<ConceptName>(concept);
+  const lastTutorRespRef = useRef<TutorResponse | null>(null);
 
-  // Initialize or reset chat on concept change
+  // Reset chat when concept changes
   useEffect(() => {
-    const welcomeMessages: Record<ConceptName, string> = {
-      superposition:
-        'Hello! I am QuIL, your quantum learning assistant. Ask me anything about the Hadamard gate, how probability amplitudes form equal superpositions, or why a qubit has no predetermined classical value before measurement.',
-      measurement:
-        'Hello! I am QuIL. I am here to clarify how quantum measurement works. Ask me about projective operators, Born rule probabilities, or why measurement irreversibly collapses the quantum state.',
-      entanglement:
-        'Hello! I am QuIL. Ask me about the Bell state, non-separable composite wavefunctions, CNOT entanglement mechanics, or why quantum correlation cannot transmit faster-than-light signals.',
-    };
-
-    setMessages([
-      {
-        id: 'welcome',
-        sender: 'quil',
-        text: welcomeMessages[concept] || welcomeMessages.superposition,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-    ]);
+    if (prevConceptRef.current !== concept) {
+      prevConceptRef.current = concept;
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const timer = setTimeout(() => {
+        setMessages([
+          {
+            id: `welcome-${concept}`,
+            sender: 'quil',
+            text: getWelcomeMessage(concept),
+            time: timeStr,
+          },
+        ]);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
   }, [concept]);
 
   // Append new tutor response to chat history
   useEffect(() => {
-    if (!tutorResponse) return;
-    const answerText = tutorResponse.explanation || (tutorResponse as any).response || '';
+    if (!tutorResponse || tutorResponse === lastTutorRespRef.current) return;
+    lastTutorRespRef.current = tutorResponse;
+    const answerText = tutorResponse.explanation || (tutorResponse as { response?: string }).response || '';
     if (!answerText) return;
 
-    setMessages((prev) => {
-      // Don't duplicate identical consecutive responses
-      if (prev.length > 0 && prev[prev.length - 1].text === answerText) return prev;
-      return [
-        ...prev,
-        {
-          id: String(Date.now()),
-          sender: 'quil',
-          text: answerText,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          insight: tutorResponse.key_insight,
-          suggestedActions: tutorResponse.suggested_actions,
-        },
-      ];
-    });
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timer = setTimeout(() => {
+      setMessages((prev) => {
+        // Don't duplicate identical consecutive responses
+        if (prev.length > 0 && prev[prev.length - 1].text === answerText) return prev;
+        return [
+          ...prev,
+          {
+            id: `quil-${now.getTime()}`,
+            sender: 'quil',
+            text: answerText,
+            time: timeStr,
+            insight: tutorResponse.key_insight,
+            suggestedActions: tutorResponse.suggested_actions,
+          },
+        ];
+      });
+    }, 0);
+    return () => clearTimeout(timer);
   }, [tutorResponse]);
 
   // Scroll to bottom when messages update
@@ -87,21 +113,21 @@ export const AITutorPanel: React.FC<Props> = ({
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  const handleSend = (textToSend?: string) => {
+  const handleSend = useCallback((textToSend?: string) => {
     const q = (textToSend !== undefined ? textToSend : question).trim();
     if (!q) return;
 
-    // Add user message to conversation history
+    const now = new Date();
     const userMsg: ChatMessage = {
-      id: String(Date.now()),
+      id: `user-${now.getTime()}`,
       sender: 'user',
       text: q,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
     setMessages((prev) => [...prev, userMsg]);
     setQuestion('');
     onAsk(q, 'explain');
-  };
+  }, [question, onAsk, setQuestion]);
 
   // Context-sensitive suggested inquiries
   const getSuggestedQuestions = (): string[] => {

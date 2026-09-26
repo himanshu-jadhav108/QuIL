@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { ConceptName } from '../types/quantum';
 import { BookOpen, BrainCircuit, Cpu, Award, Layers, ChevronRight, Zap } from 'lucide-react';
 
@@ -71,10 +72,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           className='flex items-center gap-2.5 cursor-pointer shrink-0'
           onClick={() => setActiveTab('dashboard')}
         >
-          <img
+          <Image
             src='/logo.png'
             alt='QuIL Logo'
+            width={28}
+            height={28}
             className='w-7 h-7 rounded-md object-contain border border-slate-800 bg-[#0d1424] p-0.5'
+            priority
           />
           <div>
             <div className='flex items-center gap-2'>

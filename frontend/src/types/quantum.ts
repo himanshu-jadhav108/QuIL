@@ -159,7 +159,16 @@ export interface ConceptMastery {
   correct: number;
 }
 
-export type MasteryMap = Record<ConceptName, ConceptMastery>;
+export interface MasteryProfile {
+  overall_progress?: number;
+  concepts?: Record<string, ConceptMastery>;
+  superposition?: ConceptMastery;
+  measurement?: ConceptMastery;
+  entanglement?: ConceptMastery;
+  [key: string]: unknown;
+}
+
+export type MasteryMap = MasteryProfile & Record<string, unknown>;
 
 // ─── Health ──────────────────────────────────────────────────────────────────
 export interface HealthResponse {

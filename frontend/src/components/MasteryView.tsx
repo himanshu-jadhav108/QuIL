@@ -1,6 +1,6 @@
 import React from 'react';
 import { MasteryMap, ConceptName, ConceptMastery } from '../types/quantum';
-import { Layers, CheckCircle2, TrendingUp } from 'lucide-react';
+import { Layers, TrendingUp } from 'lucide-react';
 
 interface Props {
   mastery: MasteryMap | null;
@@ -11,11 +11,11 @@ const CONCEPTS: ConceptName[] = ['superposition', 'measurement', 'entanglement']
 export const MasteryView: React.FC<Props> = ({ mastery }) => {
   const overallScore = React.useMemo(() => {
     if (!mastery) return 0;
-    if (typeof (mastery as any).overall_progress === 'number') {
-      return (mastery as any).overall_progress;
+    if (typeof mastery.overall_progress === 'number') {
+      return mastery.overall_progress;
     }
     const scores = CONCEPTS.map((c) => {
-      const entry = (mastery as any).concepts?.[c] || mastery[c];
+      const entry = (mastery.concepts?.[c] || mastery[c]) as ConceptMastery | undefined;
       return typeof entry?.score === 'number' ? entry.score : 0;
     });
     return scores.reduce((s, val) => s + val, 0) / Math.max(scores.length, 1);
@@ -71,7 +71,7 @@ export const MasteryView: React.FC<Props> = ({ mastery }) => {
       ) : (
         <div className='grid grid-cols-1 md:grid-cols-3 gap-3.5'>
           {CONCEPTS.map((conceptName) => {
-            const rawEntry = (mastery as any).concepts?.[conceptName] || mastery[conceptName];
+            const rawEntry = (mastery.concepts?.[conceptName] || mastery[conceptName]) as ConceptMastery | undefined;
             const cm: ConceptMastery = rawEntry && typeof rawEntry === 'object' ? rawEntry : {
               concept: conceptName,
               score: 0,

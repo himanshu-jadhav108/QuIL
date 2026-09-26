@@ -1,12 +1,12 @@
-import React, { useState, useMemo } from 'react';
-import { Challenge, SubmitAnswerResponse, SimulationResult, ConceptName } from '../types/quantum';
-import { Award, CheckCircle2, XCircle, RefreshCw, Send, ArrowRight, Lightbulb, Zap, BookOpen, Sparkles, Filter } from 'lucide-react';
+import React, { useState, useMemo, useRef } from 'react';
+import { Challenge, ChallengeOption, SubmitAnswerResponse, SimulationResult, ConceptName } from '../types/quantum';
+import { Award, CheckCircle2, XCircle, RefreshCw, Send, ArrowRight, Lightbulb, Sparkles, Filter } from 'lucide-react';
 
 interface Props {
   challenges: Challenge[];
   loading: boolean;
   result: SubmitAnswerResponse | null;
-  simResult: SimulationResult | null;
+  simResult?: SimulationResult | null;
   onSubmit: (challengeId: string, answerId: string) => void;
   onReload: () => void;
 }
@@ -15,7 +15,7 @@ export const ChallengeView: React.FC<Props> = ({
   challenges,
   loading,
   result,
-  simResult,
+  simResult: _simResult,
   onSubmit,
   onReload,
 }) => {
@@ -25,8 +25,9 @@ export const ChallengeView: React.FC<Props> = ({
   const [challengeHistory, setChallengeHistory] = useState<
     Record<string, { correct: boolean; score: number; points: number; feedback: string; advice?: string }>
   >({});
+  const lastHandledResultRef = useRef<SubmitAnswerResponse | null>(null);
 
-  const rawList = Array.isArray(challenges) ? challenges : [];
+  const rawList = useMemo(() => (Array.isArray(challenges) ? challenges : []), [challenges]);
 
   // Filter challenges by concept if selected
   const filteredChallenges = useMemo(() => {
@@ -40,18 +41,24 @@ export const ChallengeView: React.FC<Props> = ({
 
   // When result comes in, update history for scoring
   React.useEffect(() => {
-    if (!result || !currentChallenge) return;
+    if (!result || !currentChallenge || result === lastHandledResultRef.current) return;
+    lastHandledResultRef.current = result;
     const pts = result.points_earned ?? (result.correct ? (currentChallenge.points ?? 100) : 0);
-    setChallengeHistory((prev) => ({
-      ...prev,
-      [currentChallenge.id]: {
-        correct: result.correct,
-        score: result.score,
-        points: pts,
-        feedback: result.feedback,
-        advice: result.improvement_advice || currentChallenge.improvement_tip,
-      },
-    }));
+    const challengeId = currentChallenge.id;
+    const entry = {
+      correct: result.correct,
+      score: result.score,
+      points: pts,
+      feedback: result.feedback,
+      advice: result.improvement_advice || currentChallenge.improvement_tip,
+    };
+    const timer = setTimeout(() => {
+      setChallengeHistory((prev) => ({
+        ...prev,
+        [challengeId]: entry,
+      }));
+    }, 0);
+    return () => clearTimeout(timer);
   }, [result, currentChallenge]);
 
   // Score Calculations
@@ -67,15 +74,15 @@ export const ChallengeView: React.FC<Props> = ({
   // Options normalization
   const normalizedOptions: Array<{ id: string; text: string }> = useMemo(() => {
     if (!currentChallenge) return [];
-    const rawOpts = (currentChallenge as any).options;
+    const rawOpts = currentChallenge.options;
     if (Array.isArray(rawOpts) && rawOpts.length > 0) {
-      return rawOpts.map((opt: any, idx: number) => {
+      return rawOpts.map((opt: ChallengeOption | string, idx: number) => {
         if (typeof opt === 'string') {
           return { id: String(idx), text: opt };
         }
         return {
           id: String(opt?.id ?? idx),
-          text: opt?.text || opt?.label || String(opt),
+          text: opt?.text || String(opt),
         };
       });
     }

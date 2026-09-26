@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Image from 'next/image';
 import { Navbar, ActiveTab } from '../components/Navbar';
 import { BlochSphere } from '../components/BlochSphere';
 import { Histogram } from '../components/Histogram';
@@ -29,7 +30,6 @@ import {
   checkHealth,
 } from '../lib/api';
 import {
-  BrainCircuit,
   Cpu,
   Zap,
   AlertTriangle,
@@ -37,11 +37,9 @@ import {
   CheckCircle2,
   XCircle,
   RotateCcw,
-  BookOpen,
   Award,
   PlayCircle,
   MessageSquare,
-  Film,
 } from 'lucide-react';
 
 /* ── CONCEPT CONFIGURATION ────────────────────────────────────────── */
@@ -149,14 +147,17 @@ export default function Home() {
       const clip = await getManimClip(selectedConcept);
       setManimClip(clip);
     } catch {
-      /* fallback to static asset handled gracefully in ManimPlayer */
+      /* fallback handled gracefully in ManimPlayer */
     } finally {
       setManimLoading(false);
     }
   }, [selectedConcept]);
 
   useEffect(() => {
-    handleFetchManim();
+    const timer = setTimeout(() => {
+      handleFetchManim();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [handleFetchManim]);
 
   /* Reset prediction and state when concept changes */
@@ -304,9 +305,16 @@ export default function Home() {
 
   /* ── TAB SIDE EFFECTS ───────────────────────────────────────────── */
   useEffect(() => {
-    if (activeTab === 'challenges' && challenges.length === 0) handleLoadChallenges();
-    if (activeTab === 'mastery') getMastery().then(setMastery).catch(() => {});
-  }, [activeTab]); // eslint-disable-line
+    if (activeTab === 'challenges' && challenges.length === 0) {
+      const timer = setTimeout(() => {
+        handleLoadChallenges();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+    if (activeTab === 'mastery') {
+      getMastery().then(setMastery).catch(() => {});
+    }
+  }, [activeTab, challenges.length, handleLoadChallenges]);
 
   return (
     <div className='flex flex-col min-h-screen bg-[#080c14] text-slate-100 font-sans selection:bg-cyan-500/20'>
@@ -341,9 +349,11 @@ export default function Home() {
             {/* Header Banner */}
             <div className='space-y-1.5'>
               <div className='flex items-center gap-2'>
-                <img
+                <Image
                   src='/logo.png'
                   alt='QuIL Logo'
+                  width={24}
+                  height={24}
                   className='w-6 h-6 rounded object-contain border border-slate-700 bg-slate-900 p-0.5'
                 />
                 <span className='font-bold text-xs uppercase tracking-widest text-cyan-400 font-mono'>

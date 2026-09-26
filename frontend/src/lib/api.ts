@@ -11,7 +11,6 @@ import {
   HealthResponse,
   ConceptName,
   EvaluationResult,
-  ComparisonResult,
   MisconceptionResult,
 } from '../types/quantum';
 
@@ -23,11 +22,11 @@ export function getBaseUrl(): string {
       if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') {
         url = `http://${host}:8000`;
       } else {
-        url = 'https://eureka-forge-api.onrender.com';
+        url = 'https://quantum-intelligence-backend.onrender.com';
       }
     } else {
       url = process.env.NODE_ENV === 'production'
-        ? 'https://eureka-forge-api.onrender.com'
+        ? 'https://quantum-intelligence-backend.onrender.com'
         : 'http://127.0.0.1:8000';
     }
   }
