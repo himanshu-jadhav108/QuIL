@@ -1,12 +1,13 @@
-﻿# Quantum Intelligence Learning Lab (Eureka Forge)
+# Quantum Intelligence Learning Lab (Eureka Forge)
 
-## 🚀 Live Deployment
+## 🚀 Deployment & Production Hosting
 
-| Service | URL | Status |
+📖 **Looking to deploy your own instance? Read the complete [Step-by-Step Deployment Guide (DEPLOYMENT.md)](./DEPLOYMENT.md).**
+
+| Service | Architecture | Recommended Host |
 |---|---|---|
-| **Frontend (Vercel)** | [eureka-forge.vercel.app](https://eureka-forge.vercel.app) | ✅ Live |
-| **Backend (Render)** | [eureka-forge-api.onrender.com](https://eureka-forge-api.onrender.com) | ✅ Live |
-| **GitHub Repo** | [Omkar-ai-wed/eureka-forge](https://github.com/Omkar-ai-wed/eureka-forge) | ✅ Live |
+| **Frontend** | Next.js 16 (App Router, Tailwind CSS, Lucide) | [Vercel](https://vercel.com) |
+| **Backend** | Python 3.11, FastAPI, Qiskit Aer | [Render](https://render.com) |
 
 > **SIH26140 â€” AI-Based Interactive Quantum Algorithm Learning Platform**  
 > *Core Principle: "Simulator computes. Everything else reads."*
