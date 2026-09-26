@@ -76,7 +76,7 @@ export async function evaluatePrediction(
     });
   } catch {
     // If backend is cold-starting, execute deterministic local comparison
-    const sim = await runSimulation(concept, shots).catch(() => ({
+    const fallbackSim: SimulationResult = {
       counts: concept === 'entanglement' ? { '00': 512, '11': 512 } : { '0': 512, '1': 512 },
       probabilities: concept === 'entanglement' ? { '00': 0.5, '11': 0.5 } : { '0': 0.5, '1': 0.5 },
       num_qubits: concept === 'entanglement' ? 2 : 1,
@@ -85,7 +85,8 @@ export async function evaluatePrediction(
       gates_applied: [concept === 'entanglement' ? 'H, CX, M' : 'H, M'],
       concept,
       execution_time_ms: 3.2,
-    }));
+    };
+    const sim: SimulationResult = await runSimulation(concept, shots).catch(() => fallbackSim);
 
     const allKeys = Array.from(new Set([...Object.keys(predictionProbabilities), ...Object.keys(sim.probabilities)])).sort();
     const outcomes = allKeys.map(k => {

@@ -20,10 +20,8 @@ import {
   MasteryMap,
   ConceptName,
   EvaluationResult,
-  MisconceptionResult,
 } from '../types/quantum';
 import {
-  runSimulation,
   evaluatePrediction,
   getTutorExplanation,
   getManimClip,
@@ -35,7 +33,6 @@ import {
 } from '../lib/api';
 import {
   Atom,
-  BookOpen,
   BrainCircuit,
   Cpu,
   Layers,
@@ -46,10 +43,7 @@ import {
   CheckCircle2,
   XCircle,
   HelpCircle,
-  Sparkles,
   RotateCcw,
-  Activity,
-  Compass,
 } from 'lucide-react';
 
 /* ── CONCEPT CONFIGURATION ────────────────────────────────────────── */
