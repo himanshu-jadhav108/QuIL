@@ -6,8 +6,12 @@ const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Eureka Forge | Quantum Intelligence Learning Lab - SIH26140',
-  description: 'AI-Based Interactive Quantum Algorithm Learning Platform.',
+  title: 'QuIL | Quantum Intelligence Learning Lab — SIH26140',
+  description: 'AI-Based Interactive Quantum Algorithm Learning Platform. Students predict. The simulator proves. AI explains why.',
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

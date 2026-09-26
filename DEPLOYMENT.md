@@ -1,4 +1,7 @@
-# 🚀 Deployment Guide: Hosting Eureka Forge on Render & Vercel
+<div align="center">
+  <img src="./assets/logo.png" alt="QuIL Logo" width="160" />
+  <h1>🚀 QuIL Deployment Guide: Hosting on Render & Vercel</h1>
+</div>
 
 This repository is fully configured and ready for production hosting with a decoupled architecture:
 - **Backend (Python / FastAPI / Qiskit Aer):** Hosted on **[Render](https://render.com)** as a Web Service.

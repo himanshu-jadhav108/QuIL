@@ -263,16 +263,24 @@ export default function Home() {
         {activeTab === 'dashboard' && (
           <div className='space-y-8'>
             {/* Hero */}
-            <div className='text-center space-y-3 py-8'>
-              <div className='flex items-center justify-center gap-3 mb-4'>
-                <div className='w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center shadow-2xl shadow-cyan-500/30'>
-                  <Atom className='w-8 h-8 text-white animate-spin-slow' />
+            <div className='text-center space-y-4 py-8'>
+              <div className='flex items-center justify-center mb-3'>
+                <div className='relative group'>
+                  <div className='absolute -inset-1 bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-600 rounded-3xl blur-xl opacity-60 group-hover:opacity-100 transition duration-700 animate-pulse'></div>
+                  <img
+                    src='/logo.png'
+                    alt='QuIL Logo'
+                    className='relative w-32 h-32 md:w-36 md:h-36 rounded-2xl object-contain shadow-2xl shadow-cyan-500/30 border border-cyan-500/30 bg-slate-950/80 p-2 backdrop-blur-sm'
+                  />
                 </div>
               </div>
-              <h1 className='text-4xl font-bold text-white tracking-tight'>
+              <h1 className='text-4xl md:text-5xl font-extrabold text-white tracking-tight'>
                 Quantum Intelligence Learning Lab
               </h1>
-              <p className='text-slate-400 max-w-2xl mx-auto text-lg'>
+              <p className='text-slate-300 max-w-2xl mx-auto text-base md:text-lg font-medium'>
+                Students predict. The simulator proves. AI explains why.
+              </p>
+              <p className='text-cyan-400/90 text-sm font-mono'>
                 Predict → Build → Simulate → Compare → Diagnose → Explain → Show Me Why → Challenge → Mastery
               </p>
               <div className='flex items-center justify-center gap-2 text-xs font-mono mt-2'>
