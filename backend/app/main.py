@@ -1,4 +1,5 @@
 """FastAPI application entry point."""
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .api.routes import router
@@ -9,27 +10,42 @@ app = FastAPI(
     version="0.1.0",
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Robust CORS configuration for hosting on Render and Vercel
+cors_origins_env = os.environ.get("CORS_ORIGINS", "").strip()
+
+if cors_origins_env and cors_origins_env != "*":
+    allowed_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    # Allow local development and any cloud deployment (e.g. Vercel, Render)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"^https?://.*",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 app.include_router(router, prefix="/api/v1")
 
 
 @app.get("/")
 def root():
+    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
     return {
         "service": "Quantum Intelligence Learning Lab API (Eureka Forge)",
         "status": "online",
         "version": "0.1.0",
         "docs_url": "/docs",
         "health_url": "/api/v1/health",
-        "frontend_url": "http://localhost:3000",
-        "message": "Backend API is active. Visit http://localhost:3000 to view the interactive web platform, or /docs for API documentation."
+        "frontend_url": frontend_url,
+        "message": f"Backend API is active. Connect your frontend ({frontend_url}) or view /docs for API documentation."
     }
 
 

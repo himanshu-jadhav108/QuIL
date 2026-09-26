@@ -5,6 +5,7 @@ Never invents simulation results or overrides deterministic grading.
 '''
 from __future__ import annotations
 import os
+import pathlib
 import json
 import urllib.request
 import urllib.error
