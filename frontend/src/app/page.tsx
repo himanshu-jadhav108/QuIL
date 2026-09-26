@@ -112,11 +112,35 @@ export default function Home() {
   /* mastery */
   const [mastery, setMastery] = useState<MasteryMap | null>(null);
 
-  /* ── BOOT: health check ─────────────────────────────────────────── */
+  /* ── BOOT: health check with auto-reconnect for Render cold starts ── */
   useEffect(() => {
-    checkHealth()
-      .then((h) => setBackendReady(h.simulator_ready))
-      .catch(() => setHealthError('Backend offline. Start the FastAPI server on :8000.'));
+    let timer: NodeJS.Timeout;
+    let attempts = 0;
+
+    const probe = async () => {
+      try {
+        const h = await checkHealth();
+        if (h.simulator_ready) {
+          setBackendReady(true);
+          setHealthError('');
+          return;
+        }
+      } catch {
+        attempts += 1;
+        if (attempts === 1) {
+          setHealthError('Connecting to Quantum Engine... (Render free tier takes ~30-45s to wake up if sleeping)');
+        } else {
+          setHealthError(`Connecting to Quantum Engine (attempt ${attempts})... Spinning up simulator.`);
+        }
+        timer = setTimeout(probe, 4000);
+      }
+    };
+
+    probe();
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   /* ── RUN SIMULATION ─────────────────────────────────────────────── */

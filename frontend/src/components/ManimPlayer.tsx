@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ManimClip, ConceptName } from '../types/quantum';
 import { PlayCircle, RefreshCw, Film, BookOpen } from 'lucide-react';
 
@@ -10,6 +10,11 @@ interface Props {
 }
 
 export const ManimPlayer: React.FC<Props> = ({ clip, loading, concept, onFetch }) => {
+  const [videoError, setVideoError] = useState(false);
+
+  useEffect(() => {
+    setVideoError(false);
+  }, [clip?.clip_id]);
   return (
     <div className='bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5'>
       {/* Header */}
@@ -66,17 +71,18 @@ export const ManimPlayer: React.FC<Props> = ({ clip, loading, concept, onFetch }
             </div>
           </div>
 
-          {clip.video_url ? (
+          {clip.video_url && !videoError ? (
             <video
               src={clip.video_url}
               controls
+              onError={() => setVideoError(true)}
               className='w-full rounded-xl border border-slate-800 bg-black'
             />
           ) : (
             <div className='p-5 bg-slate-950/70 border border-violet-900/40 rounded-xl space-y-3'>
               <div className='flex items-center gap-2 text-xs font-mono text-violet-400'>
                 <BookOpen className='w-4 h-4' />
-                Fallback Explanation (video not rendered yet)
+                Visual Explanation
               </div>
               <p className='text-sm text-slate-200 leading-relaxed'>{clip.fallback_explanation}</p>
             </div>

@@ -1,4 +1,4 @@
-﻿import {
+import {
   SimulationResult,
   TutorRequest,
   TutorResponse,
@@ -12,7 +12,22 @@
   ConceptName,
 } from '../types/quantum';
 
-const BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'https://eureka-forge-api.onrender.com') + '/api/v1';
+function getBaseUrl(): string {
+  let url = (process.env.NEXT_PUBLIC_API_URL || '').trim();
+  if (!url) {
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      url = 'http://localhost:8000';
+    } else {
+      url = 'https://eureka-forge-api.onrender.com';
+    }
+  }
+  // Remove trailing slashes
+  url = url.replace(/\/+$/, '');
+  // Ensure /api/v1 suffix is present without duplication
+  return url.endsWith('/api/v1') ? url : `${url}/api/v1`;
+}
+
+const BASE = getBaseUrl();
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
