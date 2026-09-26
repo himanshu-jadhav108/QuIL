@@ -85,8 +85,11 @@ export interface EvaluationResult {
 // ─── Tutor ───────────────────────────────────────────────────────────────────
 export interface TutorRequest {
   concept: ConceptName;
-  simulation_result: SimulationResult;
+  simulation_result?: SimulationResult | null;
   user_question?: string;
+  prediction_probabilities?: Record<string, number> | null;
+  misconceptions?: MisconceptionResult[] | null;
+  mode?: 'explain' | 'hint' | 'debug';
 }
 
 export interface TutorResponse {

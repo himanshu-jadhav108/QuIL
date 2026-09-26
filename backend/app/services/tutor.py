@@ -115,7 +115,82 @@ def _deterministic_grounded_response(req: TutorRequest) -> TutorResponse:
             actions.append('Proceed to next challenge')
 
     else:
-        if any(g.gate == 'CX' for g in ctx.circuit.gates):
+        q_lower = (req.learner_question or '').lower().strip()
+        
+        # 1. Learner asking why their prediction was wrong or about mismatch
+        if 'wrong' in q_lower or 'mismatch' in q_lower or 'why did my prediction' in q_lower or 'why was my' in q_lower:
+            if cmp and not cmp.overall_match:
+                mismatched = [o for o in cmp.outcomes if not o.match]
+                m_str = ', '.join([f'|{m.outcome}> (predicted {m.predicted:.0%} vs simulated {m.simulated:.0%})' for m in mismatched])
+                resp = (
+                    f'Your prediction deviated from the quantum simulator because you anticipated a classical or definite outcome.\n\n'
+                    f'Deviations detected: {m_str}.\n\n'
+                    'Underlying Quantum Principle:\n'
+                    'The Hadamard gate produces an equal coherent superposition (|0> + |1>)/sqrt(2), so outcome 0 and outcome 1 each have exactly 50% probability under Born\'s rule. '
+                    'A qubit does not have a hidden definite value before measurement — the measurement forces an irreversible projection.'
+                )
+                actions = ['Watch Show Me Why remediation video', 'Re-run simulation with 50/50 prediction']
+            else:
+                resp = (
+                    'Your prediction actually aligned with the quantum simulator within acceptable statistical tolerance! '
+                    f'The simulator verified that the quantum state yields approximately balanced outcomes.'
+                )
+                actions = ['Proceed to next challenge', 'Explore entanglement Bell states']
+
+        # 2. Learner asking if superposition is a hidden classical state
+        elif 'hidden' in q_lower or 'secret' in q_lower or 'already 0' in q_lower:
+            resp = (
+                'No — this is the most common quantum misconception (Misconception M1).\n\n'
+                'A qubit in superposition is NOT a classical coin that is already heads or tails before we look. '
+                'The qubit exists in a genuine coherent linear combination of states. '
+                'It has no definite value until measurement forces an irreversible projection onto one basis state.'
+            )
+            actions = ['Watch Show Me Why: Superposition', 'Inspect the Bloch sphere equator']
+
+        # 3. Learner asking about faster-than-light signaling or information in entanglement
+        elif 'signal' in q_lower or 'faster' in q_lower or 'ftl' in q_lower or 'transmit' in q_lower or 'information' in q_lower:
+            resp = (
+                'No — quantum entanglement CANNOT be used for faster-than-light communication (the No-Signaling Theorem).\n\n'
+                'Even though measurement outcomes on both qubits are instantaneously correlated (|00> or |11>), '
+                'neither observer can control which outcome they obtain locally. Each individual measurement is 50/50 random, '
+                'so no message can be transmitted without a classical communication channel.'
+            )
+            actions = ['Review Bell state correlation', 'Inspect CNOT gate logic']
+
+        # 4. Learner asking about measurement collapse
+        elif 'collapse' in q_lower or 'measurement do' in q_lower or 'destroy' in q_lower:
+            resp = (
+                'Measurement in quantum mechanics is an active projection operator, not a passive camera snapshot.\n\n'
+                '1. Prior to measurement, the qubit is in a coherent superposition with both amplitudes active.\n'
+                '2. Measurement forces the state to collapse irreversibly into a single eigenstate (|0> or |1>).\n'
+                '3. If you measure the qubit again immediately after collapse, it will yield the exact same outcome with 100% certainty (Misconception M2).'
+            )
+            actions = ['Review Measurement lesson', 'Watch Show Me Why: Measurement']
+
+        # 5. Learner asking why H creates 50/50
+        elif '50' in q_lower or 'why does h' in q_lower or 'what does h' in q_lower:
+            resp = (
+                'The Hadamard (H) gate maps the basis state |0> to (|0> + |1>)/sqrt(2).\n\n'
+                '1. The probability amplitude for |0> is 1/sqrt(2).\n'
+                '2. The probability amplitude for |1> is 1/sqrt(2).\n'
+                '3. By Born\'s Rule, measurement probability is the squared magnitude: |1/sqrt(2)|² = 1/2 = 50%.\n'
+                'Geometrically, the H gate rotates the state vector from the North Pole (Z=+1) onto the equator (X=+1) of the Bloch sphere.'
+            )
+            actions = ['Inspect the Bloch sphere equator', 'Test prediction with 50/50']
+
+        # 6. Learner asking what CNOT does
+        elif 'cnot' in q_lower or 'correlated' in q_lower:
+            resp = (
+                'The CNOT (Controlled-NOT) gate flips the target qubit if and only if the control qubit is |1>.\n\n'
+                'When qubit 0 is in superposition (|0> + |1>)/sqrt(2) and qubit 1 is |0>:\n'
+                '- The |00> branch leaves qubit 1 unchanged -> |00>\n'
+                '- The |10> branch flips qubit 1 -> |11>\n'
+                'This yields the entangled Bell state (|00> + |11>)/sqrt(2). The states |01> and |10> have exactly 0% probability.'
+            )
+            actions = ['Watch Show Me Why: Bell State', 'Check 2-qubit measurement outcomes']
+
+        # Default concept-grounded explanation
+        elif any(g.gate == 'CX' for g in ctx.circuit.gates):
             resp = (
                 'Conceptual Explanation: Bell State Entanglement.\n\n'
                 '1. Step 1: The Hadamard gate on qubit 0 transforms |00> into (|0> + |1>)|0> / sqrt(2) = (|00> + |10>) / sqrt(2).\n'

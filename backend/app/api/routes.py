@@ -138,6 +138,8 @@ class FlexibleTutorRequest(BaseModel):
     user_question: str | None = None
     concept: str | None = None
     simulation_result: dict[str, Any] | None = None
+    prediction_probabilities: dict[str, float] | None = None
+    misconceptions: list[str] | None = None
     context: ExecutionContext | None = None
 
 @router.post('/tutor')
@@ -162,13 +164,18 @@ def ask_tutor(req: FlexibleTutorRequest) -> dict[str, Any]:
             'provider': res.provider,
         }
     
-    # If called from frontend with simulation_result
+    # If called from frontend with concept / prediction
     concept = req.concept or 'superposition'
     circuit = sim_svc.get_canonical_circuit(concept)
     sim = sim_svc.run_simulation(circuit, shots=1024)
+    
+    pred_probs = req.prediction_probabilities
+    if not pred_probs:
+        pred_probs = {'0': 0.5, '1': 0.5} if circuit.qubits == 1 else {'00': 0.5, '11': 0.5}
+        
     pred = PredictionInput(
         circuit=circuit,
-        probabilities={'0': 0.5, '1': 0.5} if circuit.qubits == 1 else {'00': 0.5, '11': 0.5},
+        probabilities=pred_probs,
         concept=concept
     )
     cmp = cmp_svc.compare(pred, sim)

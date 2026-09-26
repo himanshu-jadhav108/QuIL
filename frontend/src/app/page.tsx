@@ -7,6 +7,8 @@ import { Histogram } from '../components/Histogram';
 import { CircuitCanvas } from '../components/CircuitCanvas';
 import { ChallengeView } from '../components/ChallengeView';
 import { MasteryView } from '../components/MasteryView';
+import { ManimPlayer } from '../components/ManimPlayer';
+import { AITutorPanel } from '../components/AITutorPanel';
 import {
   SimulationResult,
   TutorResponse,
@@ -15,10 +17,12 @@ import {
   MasteryMap,
   ConceptName,
   EvaluationResult,
+  ManimClip,
 } from '../types/quantum';
 import {
   evaluatePrediction,
   getTutorExplanation,
+  getManimClip,
   listChallenges,
   submitAnswer,
   getMastery,
@@ -35,6 +39,9 @@ import {
   RotateCcw,
   BookOpen,
   Award,
+  PlayCircle,
+  MessageSquare,
+  Film,
 } from 'lucide-react';
 
 /* ── CONCEPT CONFIGURATION ────────────────────────────────────────── */
@@ -114,6 +121,12 @@ export default function Home() {
   /* tutor */
   const [tutorResponse, setTutorResponse] = useState<TutorResponse | null>(null);
   const [tutorLoading, setTutorLoading] = useState(false);
+  const [tutorQuestion, setTutorQuestion] = useState('');
+
+  /* manim video clips */
+  const [manimClip, setManimClip] = useState<ManimClip | null>(null);
+  const [manimLoading, setManimLoading] = useState(false);
+  const [showMeWhy, setShowMeWhy] = useState(false);
 
   /* challenges */
   const [challenges, setChallenges] = useState<Challenge[]>([]);
@@ -129,7 +142,24 @@ export default function Home() {
     [selectedConcept]
   );
 
-  /* Reset prediction when concept changes */
+  /* Fetch pre-rendered Manim instructional video metadata */
+  const handleFetchManim = useCallback(async () => {
+    setManimLoading(true);
+    try {
+      const clip = await getManimClip(selectedConcept);
+      setManimClip(clip);
+    } catch {
+      /* fallback to static asset handled gracefully in ManimPlayer */
+    } finally {
+      setManimLoading(false);
+    }
+  }, [selectedConcept]);
+
+  useEffect(() => {
+    handleFetchManim();
+  }, [handleFetchManim]);
+
+  /* Reset prediction and state when concept changes */
   const handleSelectConcept = useCallback((concept: ConceptName) => {
     setSelectedConcept(concept);
     setPrediction(DEFAULT_PREDICTIONS[concept]);
@@ -138,6 +168,8 @@ export default function Home() {
     setEvaluation(null);
     setTutorResponse(null);
     setChallenges([]);
+    setShowMeWhy(false);
+    setTutorQuestion('');
   }, []);
 
   /* ── BOOT: health check with auto-reconnect ── */
@@ -193,16 +225,24 @@ export default function Home() {
     }
   }, [selectedConcept, prediction]);
 
-  /* ── TUTOR ──────────────────────────────────────────────────────── */
+  /* ── ASK QUIL TUTOR (Context-Aware Pre and Post Simulation) ────────── */
   const handleAskTutor = useCallback(
-    async (question: string) => {
-      if (!simResult) return;
+    async (questionText: string, mode: 'explain' | 'hint' | 'debug' = 'explain') => {
       setTutorLoading(true);
       try {
+        const sum = Object.values(prediction).reduce((a, b) => a + b, 0) || 1;
+        const probMap: Record<string, number> = {};
+        Object.entries(prediction).forEach(([k, v]) => {
+          probMap[k] = +(v / sum).toFixed(4);
+        });
+
         const resp = await getTutorExplanation({
-          concept: simResult.concept,
-          simulation_result: simResult,
-          user_question: question || undefined,
+          concept: selectedConcept,
+          simulation_result: simResult || undefined,
+          prediction_probabilities: probMap,
+          misconceptions: evaluation?.misconceptions,
+          user_question: questionText || undefined,
+          mode,
         });
         setTutorResponse(resp);
       } catch {
@@ -211,7 +251,7 @@ export default function Home() {
         setTutorLoading(false);
       }
     },
-    [simResult]
+    [selectedConcept, simResult, prediction, evaluation]
   );
 
   /* ── CHALLENGES ─────────────────────────────────────────────────── */
@@ -357,13 +397,55 @@ export default function Home() {
                   onClick={() => setActiveTab('predict')}
                   className='flex items-center gap-2 px-6 py-3 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition-colors'
                 >
-                  <span>Start Experiment</span>
+                  <span>Formulate Prediction</span>
                   <ArrowRight className='w-4 h-4' />
                 </button>
                 <span className='text-xs font-mono text-slate-400'>
-                  Step 1 of 4: Formulate Hypothesis
+                  Step 1 of 4: Learn & Hypothesize
                 </span>
               </div>
+            </div>
+
+            {/* Visual Concept Explanation (Pre-rendered Manim Instruction) */}
+            <ManimPlayer
+              clip={manimClip}
+              loading={manimLoading}
+              concept={selectedConcept}
+              onFetch={handleFetchManim}
+              mode='lesson'
+              titleOverride={`Visual Explanation: ${currentConcept.title}`}
+            />
+
+            {/* Ask QuIL Interactive Learning Assistant */}
+            <AITutorPanel
+              simResult={simResult}
+              tutorResponse={tutorResponse}
+              loading={tutorLoading}
+              onAsk={handleAskTutor}
+              question={tutorQuestion}
+              setQuestion={setTutorQuestion}
+              misconceptionRule={evaluation?.misconceptions?.[0]?.rule}
+              concept={selectedConcept}
+              accuracyScore={evaluation?.comparison?.accuracy_score}
+            />
+
+            {/* Next Step Callout */}
+            <div className='p-6 bg-[#0d1424] border border-cyan-800/40 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4'>
+              <div className='space-y-1 text-center sm:text-left'>
+                <div className='text-xs font-mono uppercase tracking-widest text-cyan-400'>
+                  Ready to test your quantum intuition?
+                </div>
+                <div className='text-sm text-slate-300'>
+                  Formulate your hypothesis for this circuit and execute it on the Qiskit Aer quantum simulator.
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveTab('predict')}
+                className='flex items-center gap-2 px-6 py-3 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition-colors whitespace-nowrap'
+              >
+                <span>Make Prediction →</span>
+                <ArrowRight className='w-4 h-4' />
+              </button>
             </div>
           </div>
         )}
@@ -674,105 +756,156 @@ export default function Home() {
                     <div className='space-y-2 text-sm text-slate-200 leading-relaxed'>
                       <p className='text-slate-300 font-medium'>
                         {selectedConcept === 'superposition' && Object.values(prediction).some((v) => v >= 80)
-                          ? 'You expected a strongly definite outcome. The simulation produced an approximately balanced distribution. This suggests a misconception about how the Hadamard gate changes the qubit state.'
+                          ? 'Your prediction expected a mostly definite result, while the simulation produced an approximately balanced distribution. This suggests a misconception about how the Hadamard gate changes the qubit state.'
                           : evaluation.misconceptions[0].learner_explanation}
                       </p>
                       <div className='p-3.5 bg-slate-950 rounded-lg border border-slate-800 text-xs font-mono text-amber-300'>
                         {evaluation.misconceptions[0].evidence}
                       </div>
                     </div>
+
+                    {/* Remediation Action Controls */}
+                    <div className='flex items-center gap-3 pt-2 flex-wrap'>
+                      <button
+                        onClick={() => {
+                          setShowMeWhy(true);
+                          setTimeout(() => {
+                            document.getElementById('show-me-why-section')?.scrollIntoView({ behavior: 'smooth' });
+                          }, 100);
+                        }}
+                        className='flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-colors'
+                      >
+                        <PlayCircle className='w-4 h-4' />
+                        <span>▶ Show Me Why</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          handleAskTutor('Why was my prediction wrong?');
+                          setTimeout(() => {
+                            document.getElementById('ask-quil-section')?.scrollIntoView({ behavior: 'smooth' });
+                          }, 100);
+                        }}
+                        className='flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs transition-colors'
+                      >
+                        <MessageSquare className='w-4 h-4 text-cyan-400' />
+                        <span>Ask QuIL: Why was my prediction wrong?</span>
+                      </button>
+                    </div>
                   </div>
                 )}
 
-                {/* ── SECTION C: TUTOR INSIGHT (Appears after evidence & diagnosis) ── */}
-                <div className='bg-[#0d1424] border border-slate-800 rounded-xl p-6 space-y-4'>
-                  <div className='flex items-center justify-between pb-3 border-b border-slate-800'>
-                    <div className='flex items-center gap-2'>
-                      <BookOpen className='w-4 h-4 text-cyan-400' />
-                      <span className='text-xs font-bold font-mono uppercase tracking-wider text-slate-200'>
-                        TUTOR INSIGHT
-                      </span>
-                    </div>
-                    <span className='text-[10px] font-mono text-slate-400'>
-                      Explanation grounded in simulator evidence
-                    </span>
-                  </div>
-
-                  <p className='text-sm text-slate-200 leading-relaxed'>
-                    {tutorResponse?.explanation || (
-                      selectedConcept === 'superposition'
-                        ? 'The Hadamard gate does not randomly pick a 0 or 1. It rotates the ground state vector |0⟩ onto the equator of the Bloch sphere, forming the state |+⟩ = (|0⟩ + |1⟩)/√2. The probability of measuring either outcome is exactly |1/√2|² = 50%.'
-                        : 'The quantum state vector evolves deterministically under unitary gates and projects probabilistically upon measurement.'
-                    )}
-                  </p>
-
-                  {/* Interactive inquiry prompts */}
-                  <div className='flex flex-wrap items-center gap-2 pt-1'>
-                    <span className='text-[11px] font-mono text-slate-400 mr-1'>Inquire:</span>
-                    {[
-                      'Why 50/50 for |0⟩ and |1⟩?',
-                      'Is it secretly 0 or 1 before measuring?',
-                      'How does the state rotate on the Bloch sphere?',
-                    ].map((q) => (
+                {/* ── SECTION C: SHOW ME WHY (Visual Explanation & Manim Remediation) ── */}
+                {showMeWhy ? (
+                  <div id='show-me-why-section' className='space-y-4 animate-tab-fade'>
+                    <div className='flex items-center justify-between px-1'>
+                      <div className='text-xs font-mono uppercase tracking-wider text-cyan-400 flex items-center gap-2'>
+                        <PlayCircle className='w-4 h-4' />
+                        <span>Remediation Video Player</span>
+                      </div>
                       <button
-                        key={q}
-                        onClick={() => handleAskTutor(q)}
-                        disabled={tutorLoading}
-                        className='text-[11px] font-mono px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition-colors disabled:opacity-50'
+                        onClick={() => setShowMeWhy(false)}
+                        className='text-xs font-mono text-slate-400 hover:text-slate-200'
                       >
-                        {q}
+                        Close Video
                       </button>
-                    ))}
-                  </div>
-                </div>
+                    </div>
 
-                {/* ── SECTION D: SHOW ME WHY (Visual Explanation) ── */}
-                <div className='bg-[#0d1424] border border-slate-800 rounded-xl p-6 space-y-4'>
-                  <div className='flex items-center justify-between pb-3 border-b border-slate-800'>
-                    <div>
-                      <h3 className='text-xs font-bold font-mono uppercase tracking-wider text-slate-200'>
-                        Why did this happen? — Visual Explanation
-                      </h3>
-                      <p className='text-[11px] text-slate-400 font-mono'>
-                        Geometric State Vector Evolution for {currentConcept.title}
+                    <ManimPlayer
+                      clip={manimClip}
+                      loading={manimLoading}
+                      concept={selectedConcept}
+                      onFetch={handleFetchManim}
+                      mode='remediation'
+                      titleOverride={`Why did this happen? — ${currentConcept.title} Remediation`}
+                    />
+
+                    {/* Analytical State-Vector Derivation */}
+                    <div className='bg-[#0d1424] border border-slate-800 rounded-xl p-5 space-y-3'>
+                      <div className='flex items-center justify-between pb-2 border-b border-slate-800'>
+                        <h4 className='text-xs font-bold font-mono uppercase tracking-wider text-slate-200'>
+                          Mathematical State Vector Evolution
+                        </h4>
+                        <span className='text-[10px] font-mono text-slate-400'>
+                          Unitary Evolution & Born Projection
+                        </span>
+                      </div>
+
+                      <div className='p-4 bg-slate-950 rounded-lg border border-slate-800 space-y-2 text-xs font-mono text-slate-300 leading-relaxed whitespace-pre-line'>
+                        {selectedConcept === 'superposition' && (
+                          <>
+                            <div className='text-cyan-400 font-bold'>1. Initial State:</div>
+                            <div>|ψ₀⟩ = |0⟩  (North pole on Bloch sphere, θ = 0)</div>
+                            <div className='text-cyan-400 font-bold pt-2'>2. Hadamard Gate Transformation:</div>
+                            <div>H = (1/√2) [ [1,  1], [1, -1] ]</div>
+                            <div>H|0⟩ = (|0⟩ + |1⟩) / √2 = |+⟩  (Equator on Bloch sphere, θ = π/2, ϕ = 0)</div>
+                            <div className='text-cyan-400 font-bold pt-2'>3. Projective Measurement (Born Rule):</div>
+                            <div>P(0) = |⟨0|+⟩|² = |1/√2|² = 1/2 = 50.0%</div>
+                            <div>P(1) = |⟨1|+⟩|² = |1/√2|² = 1/2 = 50.0%</div>
+                          </>
+                        )}
+                        {selectedConcept === 'measurement' && (
+                          <>
+                            <div className='text-cyan-400 font-bold'>1. Superposition Prior to Measurement:</div>
+                            <div>|ψ⟩ = (|0⟩ + |1⟩) / √2</div>
+                            <div className='text-cyan-400 font-bold pt-2'>2. Measurement Operator Projection:</div>
+                            <div>M projects |ψ⟩ onto |0⟩ with P=0.5 or |1⟩ with P=0.5.</div>
+                            <div className='text-cyan-400 font-bold pt-2'>3. Post-Measurement State:</div>
+                            <div>State collapses irreversibly: any subsequent measurement yields the exact same outcome with P=1.0.</div>
+                          </>
+                        )}
+                        {selectedConcept === 'entanglement' && (
+                          <>
+                            <div className='text-cyan-400 font-bold'>1. Independent Qubits:</div>
+                            <div>|ψ₀⟩ = |00⟩</div>
+                            <div className='text-cyan-400 font-bold pt-2'>2. Hadamard on q₀ creates Superposition:</div>
+                            <div>(H ⊗ I)|00⟩ = (|00⟩ + |10⟩) / √2</div>
+                            <div className='text-cyan-400 font-bold pt-2'>3. CNOT Entangles q₀ and q₁:</div>
+                            <div>CNOT((|00⟩ + |10⟩)/√2) = (|00⟩ + |11⟩) / √2 = |Φ⁺⟩  (Bell State)</div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className='p-5 bg-[#0d1424] border border-cyan-800/40 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4'>
+                    <div className='space-y-1 text-center sm:text-left'>
+                      <div className='text-xs font-mono uppercase tracking-wider text-cyan-400 flex items-center gap-1.5 justify-center sm:justify-start'>
+                        <PlayCircle className='w-4 h-4' />
+                        <span>Visual Remediation Available</span>
+                      </div>
+                      <p className='text-xs text-slate-300'>
+                        Watch the dedicated pre-rendered Manim animation explaining the geometric state evolution for {currentConcept.title}.
                       </p>
                     </div>
+                    <button
+                      onClick={() => {
+                        setShowMeWhy(true);
+                        setTimeout(() => {
+                          document.getElementById('show-me-why-section')?.scrollIntoView({ behavior: 'smooth' });
+                        }, 100);
+                      }}
+                      className='flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-colors shrink-0'
+                    >
+                      <PlayCircle className='w-4 h-4' />
+                      <span>▶ Show Me Why</span>
+                    </button>
                   </div>
+                )}
 
-                  <div className='p-4 bg-slate-950 rounded-lg border border-slate-800 space-y-2 text-xs font-mono text-slate-300 leading-relaxed whitespace-pre-line'>
-                    {selectedConcept === 'superposition' && (
-                      <>
-                        <div className='text-cyan-400 font-bold'>1. Initial State:</div>
-                        <div>|ψ₀⟩ = |0⟩  (North pole on Bloch sphere, θ = 0)</div>
-                        <div className='text-cyan-400 font-bold pt-2'>2. Hadamard Gate Transformation:</div>
-                        <div>H = (1/√2) [ [1,  1], [1, -1] ]</div>
-                        <div>H|0⟩ = (|0⟩ + |1⟩) / √2 = |+⟩  (Equator on Bloch sphere, θ = π/2, ϕ = 0)</div>
-                        <div className='text-cyan-400 font-bold pt-2'>3. Projective Measurement (Born Rule):</div>
-                        <div>P(0) = |⟨0|+⟩|² = |1/√2|² = 1/2 = 50.0%</div>
-                        <div>P(1) = |⟨1|+⟩|² = |1/√2|² = 1/2 = 50.0%</div>
-                      </>
-                    )}
-                    {selectedConcept === 'measurement' && (
-                      <>
-                        <div className='text-cyan-400 font-bold'>1. Superposition Prior to Measurement:</div>
-                        <div>|ψ⟩ = (|0⟩ + |1⟩) / √2</div>
-                        <div className='text-cyan-400 font-bold pt-2'>2. Measurement Operator Projection:</div>
-                        <div>M projects |ψ⟩ onto |0⟩ with P=0.5 or |1⟩ with P=0.5.</div>
-                        <div className='text-cyan-400 font-bold pt-2'>3. Post-Measurement State:</div>
-                        <div>State collapses irreversibly: any subsequent measurement yields the exact same outcome with P=1.0.</div>
-                      </>
-                    )}
-                    {selectedConcept === 'entanglement' && (
-                      <>
-                        <div className='text-cyan-400 font-bold'>1. Independent Qubits:</div>
-                        <div>|ψ₀⟩ = |00⟩</div>
-                        <div className='text-cyan-400 font-bold pt-2'>2. Hadamard on q₀ creates Superposition:</div>
-                        <div>(H ⊗ I)|00⟩ = (|00⟩ + |10⟩) / √2</div>
-                        <div className='text-cyan-400 font-bold pt-2'>3. CNOT Entangles q₀ and q₁:</div>
-                        <div>CNOT((|00⟩ + |10⟩)/√2) = (|00⟩ + |11⟩) / √2 = |Φ⁺⟩  (Bell State)</div>
-                      </>
-                    )}
-                  </div>
+                {/* ── SECTION D: ASK QUIL (Contextual Post-Simulation Tutor) ── */}
+                <div id='ask-quil-section'>
+                  <AITutorPanel
+                    simResult={simResult}
+                    tutorResponse={tutorResponse}
+                    loading={tutorLoading}
+                    onAsk={handleAskTutor}
+                    question={tutorQuestion}
+                    setQuestion={setTutorQuestion}
+                    misconceptionRule={evaluation?.misconceptions?.[0]?.rule}
+                    concept={selectedConcept}
+                    accuracyScore={evaluation?.comparison?.accuracy_score}
+                  />
                 </div>
 
                 {/* ── SECTION E: RETRY & NEXT ACTIONS ── */}
