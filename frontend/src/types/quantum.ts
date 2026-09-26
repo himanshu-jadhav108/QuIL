@@ -46,6 +46,42 @@ export interface SimulationResult {
   error?: string | null;
 }
 
+// ─── Comparison & Diagnostics ──────────────────────────────────────────────
+export interface OutcomeComparison {
+  outcome: string;
+  predicted: number;
+  simulated: number;
+  delta: number;
+  match: boolean;
+}
+
+export interface ComparisonResult {
+  tolerance: number;
+  overall_match: boolean;
+  outcomes: OutcomeComparison[];
+  accuracy_score: number;
+  summary: string;
+}
+
+export interface MisconceptionResult {
+  rule: 'M1' | 'M2' | 'M3' | 'M4' | string;
+  triggered: boolean;
+  confidence: number;
+  evidence: string;
+  learner_explanation: string;
+  remediation_concept: string;
+  suggested_challenge?: string | null;
+  manim_clip_id?: string | null;
+}
+
+export interface EvaluationResult {
+  concept: ConceptName;
+  simulation: SimulationResult;
+  comparison: ComparisonResult;
+  misconceptions: MisconceptionResult[];
+  trace: TraceStep[];
+}
+
 // ─── Tutor ───────────────────────────────────────────────────────────────────
 export interface TutorRequest {
   concept: ConceptName;

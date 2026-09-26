@@ -1,48 +1,75 @@
 @import 'tailwindcss';
 
 :root {
-  --background: #020817;
+  --background: #080c14;
+  --surface: #0f172a;
+  --surface-muted: #0b1120;
+  --surface-border: #1e293b;
   --foreground: #e2e8f0;
+  --muted: #94a3b8;
   --accent-cyan: #06b6d4;
+  --accent-emerald: #10b981;
   --accent-indigo: #6366f1;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0f172a; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
-
-/* Quantum glow utilities */
-.glow-cyan { box-shadow: 0 0 20px rgba(6, 182, 212, 0.15); }
-.glow-indigo { box-shadow: 0 0 20px rgba(99, 102, 241, 0.15); }
-
-/* Spin animation for atom logo */
-@keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.animate-spin-slow { animation: spin-slow 8s linear infinite; }
-
-/* Pulse glow */
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+/* Subtle, precision scientific scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
 }
-.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+::-webkit-scrollbar-track {
+  background: #080c14;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
 
-/* Bloch sphere canvas */
-canvas { display: block; }
+/* Precise scientific cards & borders */
+.lab-card {
+  background-color: #0d1424;
+  border: 1px solid #1e293b;
+  border-radius: 0.75rem;
+}
 
-/* Monospace numbers */
-.tabular-nums { font-variant-numeric: tabular-nums; }
+.lab-card-hover {
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.lab-card-hover:hover {
+  border-color: #334155;
+}
+
+/* Typography numbers */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Canvas reset */
+canvas {
+  display: block;
+}
 
 /* Hide scrollbar utility */
-.scrollbar-none::-webkit-scrollbar { display: none; }
-.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -91,6 +91,47 @@ def run_and_compare(req: CompareRequest) -> ExecutionContext:
         misconceptions=misconceptions,
     )
 
+class QuickCompareRequest(BaseModel):
+    concept: str = 'superposition'
+    prediction_probabilities: dict[str, float]
+    shots: int = 1024
+    notes: str | None = None
+
+@router.post('/evaluate')
+def evaluate(req: QuickCompareRequest) -> dict[str, Any]:
+    concept = req.concept or 'superposition'
+    circuit = sim_svc.get_canonical_circuit(concept)
+    sim = sim_svc.run_simulation(circuit, shots=req.shots)
+    if sim.error:
+        raise HTTPException(status_code=500, detail=sim.error)
+
+    # Normalize prediction probabilities to strictly sum to 1.0
+    total = sum(req.prediction_probabilities.values()) or 1.0
+    norm_probs = {k: round(v / total, 4) for k, v in req.prediction_probabilities.items()}
+
+    # Adjust floating point residual so sum is exact
+    diff = round(1.0 - sum(norm_probs.values()), 4)
+    if diff != 0 and norm_probs:
+        first_k = next(iter(norm_probs))
+        norm_probs[first_k] = round(norm_probs[first_k] + diff, 4)
+
+    pred = PredictionInput(
+        circuit=circuit,
+        probabilities=norm_probs,
+        concept=concept,
+        notes=req.notes
+    )
+    comparison = cmp_svc.compare(pred, sim)
+    misconceptions = misc_svc.triggered_only(comparison)
+
+    return {
+        'concept': concept,
+        'simulation': sim.model_dump(),
+        'comparison': comparison.model_dump(),
+        'misconceptions': [m.model_dump() for m in misconceptions],
+        'trace': [t.model_dump() for t in sim_svc._build_trace(circuit)],
+    }
+
 class FlexibleTutorRequest(BaseModel):
     mode: TutorMode | None = None
     learner_question: str | None = None
