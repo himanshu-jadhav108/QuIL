@@ -2,8 +2,7 @@
 
 :root {
   --background: #080c14;
-  --surface: #0f172a;
-  --surface-muted: #0b1120;
+  --surface: #0d1424;
   --surface-border: #1e293b;
   --foreground: #e2e8f0;
   --muted: #94a3b8;
@@ -49,10 +48,67 @@ body {
 }
 
 .lab-card-hover {
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition: border-color 0.15s ease-out, background-color 0.15s ease-out;
 }
 .lab-card-hover:hover {
   border-color: #334155;
+}
+
+/* Button System: Primary (Solid Cyan), Secondary (Slate Outline), Ghost (Text-only) */
+.btn-primary {
+  background-color: var(--accent-cyan);
+  color: #080c14;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  transition: background-color 150ms ease-out;
+}
+.btn-primary:hover {
+  background-color: #22d3ee;
+}
+
+.btn-secondary {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  color: #e2e8f0;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  transition: border-color 150ms ease-out, background-color 150ms ease-out;
+}
+.btn-secondary:hover {
+  background-color: #334155;
+  border-color: #475569;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 0.375rem 0.625rem;
+  transition: color 150ms ease-out;
+}
+.btn-ghost:hover {
+  color: #f1f5f9;
+}
+
+/* Card entrance on tab switch (150ms ease-out fade) */
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-tab-fade {
+  animation: tabFadeIn 150ms ease-out forwards;
 }
 
 /* Typography numbers */

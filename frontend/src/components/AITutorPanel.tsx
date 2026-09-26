@@ -11,6 +11,7 @@ interface Props {
   setQuestion: (q: string) => void;
   misconceptionRule?: string | null;
   concept?: ConceptName;
+  onNavigateToResults?: () => void;
 }
 
 export const AITutorPanel: React.FC<Props> = ({
@@ -22,6 +23,7 @@ export const AITutorPanel: React.FC<Props> = ({
   setQuestion,
   misconceptionRule,
   concept = 'superposition',
+  onNavigateToResults,
 }) => {
   const quickQuestions: Record<ConceptName, string[]> = {
     superposition: [
@@ -50,7 +52,7 @@ export const AITutorPanel: React.FC<Props> = ({
   };
 
   return (
-    <div className='bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-5'>
+    <div className='bg-[#0d1424] border border-slate-800 rounded-xl p-5 space-y-5'>
       {/* Header */}
       <div className='flex items-center justify-between pb-3 border-b border-slate-800/80'>
         <div className='flex items-center gap-2.5'>
@@ -84,27 +86,32 @@ export const AITutorPanel: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Ground Truth Evidence Context Strip */}
+      {/* Ground Truth Evidence Context Strip (Linked to Results) */}
       {simResult ? (
         <div className='p-3 bg-slate-950/80 rounded-lg border border-slate-800/80 text-[11px] font-mono flex flex-wrap items-center justify-between gap-3 text-slate-400'>
           <div className='flex items-center gap-2'>
-            <span className='text-slate-500'>Evidence Grounding:</span>
+            <span className='text-slate-400'>Grounded In:</span>
             <span className='text-slate-200'>Qiskit Aer ({simResult.num_shots} shots)</span>
-            <span className='text-slate-600'>|</span>
+            <span className='text-slate-600'>·</span>
             <span className='text-cyan-400 font-medium capitalize'>{simResult.concept}</span>
-          </div>
-          <div className='flex items-center gap-3'>
-            <span className='text-slate-300'>
-              {Object.entries(simResult.probabilities)
-                .map(([k, v]) => `|${k}⟩: ${(v * 100).toFixed(1)}%`)
-                .join(', ')}
-            </span>
             {misconceptionRule && (
-              <span className='px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-400 border border-amber-800/60 font-mono text-[10px]'>
-                Rule {misconceptionRule} Active
-              </span>
+              <>
+                <span className='text-slate-600'>·</span>
+                <span className='px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-400 border border-amber-800/60 font-mono text-[10px]'>
+                  Rule {misconceptionRule} Active
+                </span>
+              </>
             )}
           </div>
+          {onNavigateToResults && (
+            <button
+              onClick={onNavigateToResults}
+              className='text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1 text-[11px] underline-offset-2 hover:underline'
+            >
+              <span>View full comparison in Evidence & Compare</span>
+              <span>→</span>
+            </button>
+          )}
         </div>
       ) : (
         <div className='p-3 bg-slate-950/60 rounded-lg border border-slate-800/60 text-xs text-slate-400 font-mono text-center'>

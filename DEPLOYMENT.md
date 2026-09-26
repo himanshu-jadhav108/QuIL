@@ -85,7 +85,13 @@ If you prefer setting up the web service manually:
    - `https://<your-service>.onrender.com/docs` (Should open interactive Swagger UI)
 
 > [!NOTE]
-> **Render Free Tier Cold Starts:** Render free services spin down after 15 minutes of inactivity. The first request after sleep takes ~30–45 seconds to spin up. The frontend includes automatic polling and an informative wake-up notification while the simulator starts up.
+> **Render Free Tier Cold Starts & Demo Day Pre-Warm Protocol:**
+> Render free services spin down after 15 minutes of inactivity. The first request takes ~30–45s to wake up.
+> **For Demo Day / Video Recording:**
+> 1. Exactly 2 minutes before starting your recording, open your browser and navigate to:
+>    `https://<your-service>.onrender.com/health`
+> 2. Ensure it returns `{"status":"ok","simulator_ready":true}`.
+> 3. Now open your Vercel frontend. The top bar will show `Qiskit Aer: Online (1,024 Shots)` with a solid green badge immediately, and zero cold-start banners will appear during your presentation.
 
 ---
 

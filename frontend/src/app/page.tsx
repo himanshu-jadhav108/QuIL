@@ -329,15 +329,15 @@ export default function Home() {
             1. WORKSPACE / DASHBOARD
            ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'dashboard' && (
-          <div className='space-y-6'>
-            {/* Scientific Workspace Header */}
-            <div className='bg-[#0d1424] border border-slate-800 rounded-xl p-6 sm:p-8 space-y-6'>
-              <div className='flex flex-col md:flex-row md:items-center justify-between gap-6'>
+          <div className='space-y-6 animate-tab-fade'>
+            {/* Scientific Workspace Header (Unified Learning Objective & Workflow) */}
+            <div className='bg-[#0d1424] border border-slate-800 rounded-xl p-6 sm:p-7 space-y-5'>
+              <div className='flex flex-col md:flex-row md:items-center justify-between gap-5'>
                 <div className='flex items-start gap-4'>
                   <img
                     src='/logo.png'
                     alt='QuIL Logo'
-                    className='w-14 h-14 rounded-xl object-contain border border-slate-700/80 bg-slate-900 p-1 shrink-0'
+                    className='w-12 h-12 rounded-lg object-contain border border-slate-700/80 bg-slate-900 p-1 shrink-0'
                   />
                   <div className='space-y-1'>
                     <div className='flex items-center gap-2.5 flex-wrap'>
@@ -369,49 +369,24 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Pedagogical Loop Indicator */}
-              <div className='pt-4 border-t border-slate-800/80'>
-                <div className='text-[10px] font-mono uppercase tracking-wider text-slate-400 mb-2'>
-                  Pedagogical Workflow
+              {/* Combined Active Learning Objective & State Indicator */}
+              <div className='pt-4 border-t border-slate-800/80 grid grid-cols-1 lg:grid-cols-3 gap-4 items-center'>
+                <div className='lg:col-span-2 space-y-1.5'>
+                  <div className='flex items-center gap-2'>
+                    <span className='text-[10px] font-mono uppercase tracking-wider text-slate-400'>
+                      Active Learning Objective
+                    </span>
+                    <span className='text-[10px] font-mono text-cyan-400 border border-cyan-800/60 bg-cyan-950/40 px-1.5 py-0.5 rounded'>
+                      {currentConcept.qubits} Qubit · {currentConcept.gates.replace('\n', ' ')}
+                    </span>
+                  </div>
+                  <h2 className='text-base font-bold text-white'>{currentConcept.title}</h2>
+                  <p className='text-xs text-slate-300 leading-relaxed max-w-2xl'>{currentConcept.description}</p>
                 </div>
-                <div className='grid grid-cols-3 sm:grid-cols-6 gap-2 text-xs font-mono'>
-                  {[
-                    { step: '1. Predict', desc: 'Hypothesize' },
-                    { step: '2. Build', desc: 'Circuit wire' },
-                    { step: '3. Simulate', desc: 'Aer backend' },
-                    { step: '4. Compare', desc: 'Δ Ground truth' },
-                    { step: '5. Diagnose', desc: 'M1–M4 rules' },
-                    { step: '6. Master', desc: 'Verification' },
-                  ].map((s, i) => (
-                    <div
-                      key={s.step}
-                      className='p-2.5 rounded-md bg-slate-900/60 border border-slate-800/80'
-                    >
-                      <div className='text-cyan-400 font-medium'>{s.step}</div>
-                      <div className='text-[11px] text-slate-400'>{s.desc}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
 
-            {/* Current Objective Banner */}
-            <div className='bg-[#0d1424] border border-slate-800 rounded-xl p-5 space-y-3'>
-              <div className='flex items-center justify-between'>
-                <div className='text-xs font-mono uppercase tracking-wider text-slate-400'>
-                  Active Learning Objective
-                </div>
-                <span className='text-xs font-mono text-cyan-400 border border-cyan-800/60 bg-cyan-950/40 px-2 py-0.5 rounded'>
-                  {currentConcept.qubits} Qubit · {currentConcept.gates.replace('\n', ' ')}
-                </span>
-              </div>
-              <div className='flex flex-col lg:flex-row lg:items-center justify-between gap-4'>
-                <div className='space-y-1 max-w-3xl'>
-                  <h2 className='text-lg font-bold text-white'>{currentConcept.title}</h2>
-                  <p className='text-sm text-slate-300 leading-relaxed'>{currentConcept.description}</p>
-                </div>
-                <div className='p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-cyan-300 whitespace-nowrap self-start lg:self-center'>
-                  {currentConcept.mathState}
+                <div className='p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-cyan-300 text-center lg:text-right'>
+                  <div className='text-[10px] text-slate-400 mb-1 uppercase tracking-wider'>State Vector Target</div>
+                  <div>{currentConcept.mathState}</div>
                 </div>
               </div>
             </div>
@@ -433,7 +408,7 @@ export default function Home() {
                       onClick={() => handleSelectConcept(c.id)}
                       className={`cursor-pointer rounded-xl border p-5 space-y-3 transition-all ${
                         isSelected
-                          ? 'bg-[#0f172a] border-cyan-500/80 shadow-sm'
+                          ? 'bg-[#0d1424] border-cyan-500/80 shadow-sm'
                           : 'bg-[#0d1424] border-slate-800 hover:border-slate-700'
                       }`}
                     >
@@ -464,56 +439,6 @@ export default function Home() {
                 })}
               </div>
             </div>
-
-            {/* Quick Actions Matrix */}
-            <div className='grid grid-cols-2 sm:grid-cols-4 gap-3'>
-              <button
-                onClick={() => setActiveTab('predict')}
-                className='flex items-center gap-2.5 p-3.5 rounded-lg bg-[#0d1424] border border-slate-800 hover:border-cyan-800 hover:bg-slate-900 transition-colors text-left'
-              >
-                <BrainCircuit className='w-4 h-4 text-cyan-400 shrink-0' />
-                <div>
-                  <div className='text-xs font-semibold text-slate-200'>1. Formulate Hypothesis</div>
-                  <div className='text-[11px] text-slate-400'>Specify expected probabilities</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('circuit')}
-                className='flex items-center gap-2.5 p-3.5 rounded-lg bg-[#0d1424] border border-slate-800 hover:border-cyan-800 hover:bg-slate-900 transition-colors text-left'
-              >
-                <Atom className='w-4 h-4 text-cyan-400 shrink-0' />
-                <div>
-                  <div className='text-xs font-semibold text-slate-200'>2. Inspect Circuit Lab</div>
-                  <div className='text-[11px] text-slate-400'>Qiskit Aer gate assembly</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => {
-                  setActiveTab('results');
-                  handleRunEvaluation();
-                }}
-                className='flex items-center gap-2.5 p-3.5 rounded-lg bg-[#0d1424] border border-slate-800 hover:border-cyan-800 hover:bg-slate-900 transition-colors text-left'
-              >
-                <Cpu className='w-4 h-4 text-cyan-400 shrink-0' />
-                <div>
-                  <div className='text-xs font-semibold text-slate-200'>3. Run & Compare</div>
-                  <div className='text-[11px] text-slate-400'>Deterministic verification</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('challenges')}
-                className='flex items-center gap-2.5 p-3.5 rounded-lg bg-[#0d1424] border border-slate-800 hover:border-cyan-800 hover:bg-slate-900 transition-colors text-left'
-              >
-                <Layers className='w-4 h-4 text-cyan-400 shrink-0' />
-                <div>
-                  <div className='text-xs font-semibold text-slate-200'>4. Mastery Assessment</div>
-                  <div className='text-[11px] text-slate-400'>Check conceptual progression</div>
-                </div>
-              </button>
-            </div>
           </div>
         )}
 
@@ -521,7 +446,7 @@ export default function Home() {
             2. PREDICT PHASE (Hypothesis Formulation)
            ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'predict' && (
-          <div className='space-y-6'>
+          <div className='space-y-6 animate-tab-fade'>
             {/* Header */}
             <div className='flex items-center justify-between pb-3 border-b border-slate-800'>
               <div className='flex items-center gap-3'>
@@ -708,7 +633,7 @@ export default function Home() {
             3. CIRCUIT LAB PHASE
            ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'circuit' && (
-          <div className='space-y-6'>
+          <div className='space-y-6 animate-tab-fade'>
             <CircuitCanvas
               concept={selectedConcept}
               circuitDiagram={simResult?.circuit_diagram || ''}
@@ -741,7 +666,7 @@ export default function Home() {
             4. EVIDENCE & COMPARE (Simulator Ground Truth vs Hypothesis)
            ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'results' && (
-          <div className='space-y-6'>
+          <div className='space-y-6 animate-tab-fade'>
             {/* Simulator Loading State */}
             {simLoading && (
               <div className='flex items-center gap-3 p-6 bg-[#0d1424] border border-slate-800 rounded-xl'>
@@ -874,29 +799,29 @@ export default function Home() {
                 )}
 
                 {/* Next Step Navigations */}
-                <div className='flex flex-wrap items-center gap-3 pt-2'>
+                <div className='flex flex-wrap items-center gap-4 pt-3 border-t border-slate-800/80'>
                   <button
                     onClick={() => setActiveTab('tutor')}
                     className='flex items-center gap-2 px-5 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-xs transition-colors'
                   >
-                    <span>Proceed to Grounded AI Tutor</span>
+                    <span>Ask the Tutor Why</span>
                     <ArrowRight className='w-4 h-4' />
                   </button>
 
                   <button
                     onClick={() => setActiveTab('manim')}
-                    className='flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition-colors'
+                    className='text-slate-400 hover:text-slate-200 text-xs font-mono transition-colors flex items-center gap-1.5 py-1 px-2'
                   >
-                    <PlayCircle className='w-3.5 h-3.5 text-cyan-400' />
-                    <span>Watch Geometric Video (Show Me Why)</span>
+                    <PlayCircle className='w-3.5 h-3.5 text-slate-500' />
+                    <span>Watch Geometric Video (Show Me Why) →</span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab('challenges')}
-                    className='flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition-colors'
+                    className='text-slate-400 hover:text-slate-200 text-xs font-mono transition-colors flex items-center gap-1.5 py-1 px-2'
                   >
-                    <Layers className='w-3.5 h-3.5 text-cyan-400' />
-                    <span>Test Concept in Verification Challenge</span>
+                    <Layers className='w-3.5 h-3.5 text-slate-500' />
+                    <span>Test Concept in Challenge →</span>
                   </button>
                 </div>
               </div>
@@ -927,48 +852,59 @@ export default function Home() {
             5. GROUNDED AI TUTOR
            ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'tutor' && (
-          <AITutorPanel
-            simResult={simResult}
-            tutorResponse={tutorResponse}
-            loading={tutorLoading}
-            onAsk={handleAskTutor}
-            question={tutorQuestion}
-            setQuestion={setTutorQuestion}
-            misconceptionRule={evaluation?.misconceptions?.[0]?.rule || null}
-            concept={selectedConcept}
-          />
+          <div className='animate-tab-fade'>
+            <AITutorPanel
+              simResult={simResult}
+              tutorResponse={tutorResponse}
+              loading={tutorLoading}
+              onAsk={handleAskTutor}
+              question={tutorQuestion}
+              setQuestion={setTutorQuestion}
+              misconceptionRule={evaluation?.misconceptions?.[0]?.rule || null}
+              concept={selectedConcept}
+              onNavigateToResults={() => setActiveTab('results')}
+            />
+          </div>
         )}
 
         {/* ══════════════════════════════════════════════════════════════
             6. SHOW ME WHY (Manim Video Engine)
            ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'manim' && (
-          <ManimPlayer
-            clip={manimClip}
-            loading={manimLoading}
-            concept={selectedConcept}
-            onFetch={handleFetchManim}
-          />
+          <div className='animate-tab-fade'>
+            <ManimPlayer
+              clip={manimClip}
+              loading={manimLoading}
+              concept={selectedConcept}
+              onFetch={handleFetchManim}
+            />
+          </div>
         )}
 
         {/* ══════════════════════════════════════════════════════════════
             7. CHALLENGES (Deterministic Verification)
            ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'challenges' && (
-          <ChallengeView
-            challenges={challenges}
-            loading={challengeLoading}
-            result={challengeResult}
-            simResult={simResult}
-            onSubmit={handleSubmitAnswer}
-            onReload={handleLoadChallenges}
-          />
+          <div className='animate-tab-fade'>
+            <ChallengeView
+              challenges={challenges}
+              loading={challengeLoading}
+              result={challengeResult}
+              simResult={simResult}
+              onSubmit={handleSubmitAnswer}
+              onReload={handleLoadChallenges}
+            />
+          </div>
         )}
 
         {/* ══════════════════════════════════════════════════════════════
             8. MASTERY MAP
            ══════════════════════════════════════════════════════════════ */}
-        {activeTab === 'mastery' && <MasteryView mastery={mastery} />}
+        {activeTab === 'mastery' && (
+          <div className='animate-tab-fade'>
+            <MasteryView mastery={mastery} />
+          </div>
+        )}
 
       </main>
 
