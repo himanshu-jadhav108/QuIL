@@ -139,7 +139,7 @@ class FlexibleTutorRequest(BaseModel):
     concept: str | None = None
     simulation_result: dict[str, Any] | None = None
     prediction_probabilities: dict[str, float] | None = None
-    misconceptions: list[str] | None = None
+    misconceptions: list[Any] | None = None
     context: ExecutionContext | None = None
 
 @router.post('/tutor')
@@ -180,6 +180,21 @@ def ask_tutor(req: FlexibleTutorRequest) -> dict[str, Any]:
     )
     cmp = cmp_svc.compare(pred, sim)
     misconceptions = misc_svc.triggered_only(cmp)
+
+    # If client passed pre-diagnosed misconceptions, include them
+    if req.misconceptions:
+        parsed_misc = []
+        for m in req.misconceptions:
+            if isinstance(m, dict):
+                try:
+                    parsed_misc.append(MisconceptionResult(**m))
+                except Exception:
+                    pass
+            elif isinstance(m, MisconceptionResult):
+                parsed_misc.append(m)
+        if parsed_misc:
+            misconceptions = parsed_misc
+
     ctx = ExecutionContext(
         concept=concept,
         circuit=circuit,

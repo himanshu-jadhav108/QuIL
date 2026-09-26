@@ -245,8 +245,19 @@ export default function Home() {
           mode,
         });
         setTutorResponse(resp);
-      } catch {
-        /* noop */
+      } catch (err) {
+        console.error('Tutor inquiry failed, providing grounded fallback:', err);
+        setTutorResponse({
+          concept: selectedConcept,
+          explanation:
+            selectedConcept === 'superposition'
+              ? 'The Hadamard gate maps the ground state |0⟩ to an equal superposition (|0⟩ + |1⟩)/√2. By Born\'s rule, measuring yields |0⟩ or |1⟩ with equal 50% probability.'
+              : selectedConcept === 'measurement'
+              ? 'Quantum measurement is a non-unitary projective operation that collapses a superposition state into a single definite eigenbasis state.'
+              : 'The Bell circuit entangles two qubits into the non-separable state (|00⟩ + |11⟩)/√2, ensuring perfectly correlated measurement outcomes.',
+          key_insight: 'Quantum probabilities are governed by squared complex amplitudes under unitary evolution and projection.',
+          next_step: 'Formulate your prediction or run the quantum experiment to verify with real simulator evidence.',
+        });
       } finally {
         setTutorLoading(false);
       }
