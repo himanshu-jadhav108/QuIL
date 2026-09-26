@@ -15,13 +15,20 @@ import {
   MisconceptionResult,
 } from '../types/quantum';
 
-function getBaseUrl(): string {
+export function getBaseUrl(): string {
   let url = (process.env.NEXT_PUBLIC_API_URL || '').trim();
   if (!url) {
-    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-      url = 'http://localhost:8000';
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname;
+      if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') {
+        url = `http://${host}:8000`;
+      } else {
+        url = 'https://eureka-forge-api.onrender.com';
+      }
     } else {
-      url = 'https://eureka-forge-api.onrender.com';
+      url = process.env.NODE_ENV === 'production'
+        ? 'https://eureka-forge-api.onrender.com'
+        : 'http://127.0.0.1:8000';
     }
   }
   // Remove trailing slashes
@@ -30,7 +37,11 @@ function getBaseUrl(): string {
   return url.endsWith('/api/v1') ? url : `${url}/api/v1`;
 }
 
-const BASE = getBaseUrl();
+function endpoint(path: string): string {
+  const base = getBaseUrl();
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${base}${cleanPath}`;
+}
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -46,12 +57,12 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
 
 /* Health */
 export async function checkHealth(): Promise<HealthResponse> {
-  return fetchJson<HealthResponse>(`${BASE}/health`);
+  return fetchJson<HealthResponse>(endpoint('/health'));
 }
 
 /* Simulation */
 export async function runSimulation(concept: ConceptName, shots = 1024): Promise<SimulationResult> {
-  return fetchJson<SimulationResult>(`${BASE}/simulate`, {
+  return fetchJson<SimulationResult>(endpoint('/simulate'), {
     method: 'POST',
     body: JSON.stringify({ concept, shots }),
   });
@@ -65,7 +76,7 @@ export async function evaluatePrediction(
   notes?: string
 ): Promise<EvaluationResult> {
   try {
-    return await fetchJson<EvaluationResult>(`${BASE}/evaluate`, {
+    return await fetchJson<EvaluationResult>(endpoint('/evaluate'), {
       method: 'POST',
       body: JSON.stringify({
         concept,
@@ -140,12 +151,12 @@ export async function evaluatePrediction(
 
 /* Execution trace */
 export async function getTrace(concept: ConceptName): Promise<TraceStep[]> {
-  return fetchJson<TraceStep[]>(`${BASE}/trace?concept=${encodeURIComponent(concept)}`);
+  return fetchJson<TraceStep[]>(endpoint(`/trace?concept=${encodeURIComponent(concept)}`));
 }
 
 /* Tutor */
 export async function getTutorExplanation(req: TutorRequest): Promise<TutorResponse> {
-  return fetchJson<TutorResponse>(`${BASE}/tutor`, {
+  return fetchJson<TutorResponse>(endpoint('/tutor'), {
     method: 'POST',
     body: JSON.stringify(req),
   });
@@ -153,16 +164,16 @@ export async function getTutorExplanation(req: TutorRequest): Promise<TutorRespo
 
 /* Manim */
 export async function getManimClip(concept: ConceptName): Promise<ManimClip> {
-  return fetchJson<ManimClip>(`${BASE}/manim/select?concept=${encodeURIComponent(concept)}`);
+  return fetchJson<ManimClip>(endpoint(`/manim/select?concept=${encodeURIComponent(concept)}`));
 }
 
 /* Challenges */
 export async function listChallenges(concept: ConceptName): Promise<Challenge[]> {
-  return fetchJson<Challenge[]>(`${BASE}/challenges?concept=${encodeURIComponent(concept)}`);
+  return fetchJson<Challenge[]>(endpoint(`/challenges?concept=${encodeURIComponent(concept)}`));
 }
 
 export async function submitAnswer(req: SubmitAnswerRequest): Promise<SubmitAnswerResponse> {
-  return fetchJson<SubmitAnswerResponse>(`${BASE}/challenges/submit`, {
+  return fetchJson<SubmitAnswerResponse>(endpoint('/challenges/submit'), {
     method: 'POST',
     body: JSON.stringify(req),
   });
@@ -170,6 +181,7 @@ export async function submitAnswer(req: SubmitAnswerRequest): Promise<SubmitAnsw
 
 /* Mastery */
 export async function getMastery(): Promise<MasteryMap> {
-  return fetchJson<MasteryMap>(`${BASE}/mastery`);
+  return fetchJson<MasteryMap>(endpoint('/mastery'));
 }
+
 
