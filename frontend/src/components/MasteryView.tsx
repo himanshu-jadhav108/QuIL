@@ -9,9 +9,17 @@ interface Props {
 const CONCEPTS: ConceptName[] = ['superposition', 'measurement', 'entanglement'];
 
 export const MasteryView: React.FC<Props> = ({ mastery }) => {
-  const overallScore = mastery
-    ? Object.values(mastery).reduce((s, m) => s + m.score, 0) / Math.max(Object.values(mastery).length, 1)
-    : 0;
+  const overallScore = React.useMemo(() => {
+    if (!mastery) return 0;
+    if (typeof (mastery as any).overall_progress === 'number') {
+      return (mastery as any).overall_progress;
+    }
+    const scores = CONCEPTS.map((c) => {
+      const entry = (mastery as any).concepts?.[c] || mastery[c];
+      return typeof entry?.score === 'number' ? entry.score : 0;
+    });
+    return scores.reduce((s, val) => s + val, 0) / Math.max(scores.length, 1);
+  }, [mastery]);
 
   return (
     <div className='bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-5'>
@@ -63,7 +71,8 @@ export const MasteryView: React.FC<Props> = ({ mastery }) => {
       ) : (
         <div className='grid grid-cols-1 md:grid-cols-3 gap-3.5'>
           {CONCEPTS.map((conceptName) => {
-            const cm: ConceptMastery = mastery[conceptName] || {
+            const rawEntry = (mastery as any).concepts?.[conceptName] || mastery[conceptName];
+            const cm: ConceptMastery = rawEntry && typeof rawEntry === 'object' ? rawEntry : {
               concept: conceptName,
               score: 0,
               level: 'Learning',

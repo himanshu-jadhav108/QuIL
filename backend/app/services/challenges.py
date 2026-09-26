@@ -24,6 +24,13 @@ CHALLENGES: dict[str, Challenge] = {
             concept='superposition'
         ),
         expected_outcomes={'0': 0.5, '1': 0.5},
+        options=[
+            'P(|0⟩) = 50%, P(|1⟩) = 50% — Balanced equal superposition',
+            'P(|0⟩) = 100%, P(|1⟩) = 0% — Deterministic outcome |0⟩',
+            'P(|0⟩) = 0%, P(|1⟩) = 100% — Deterministic outcome |1⟩',
+            'P(|0⟩) = 75%, P(|1⟩) = 25% — Biased toward ground state'
+        ],
+        correct_option_index=0,
         explanation='The H gate maps |0> to (|0> + |1>)/sqrt(2), which gives equal 50% probability to outcome 0 and outcome 1.'
     ),
     'challenge-bell': Challenge(
@@ -32,7 +39,7 @@ CHALLENGES: dict[str, Challenge] = {
         type=ChallengeType.CONSTRUCTION,
         concept='entanglement',
         difficulty='Intermediate',
-        prompt='Construct the entangled Bell state |Phi+> = (|00> + |11>)/sqrt(2) using 2 qubits, 1 Hadamard gate, and 1 CNOT gate.',
+        prompt='Construct the entangled Bell state |Phi+> = (|00> + |11>)/sqrt(2) using 2 qubits, 1 Hadamard gate, and 1 CNOT gate. Which gate sequence creates this state?',
         initial_circuit=CanonicalCircuit(
             qubits=2,
             gates=[],
@@ -40,6 +47,13 @@ CHALLENGES: dict[str, Challenge] = {
             concept='entanglement'
         ),
         expected_outcomes={'00': 0.5, '11': 0.5},
+        options=[
+            'Hadamard on qubit 0, followed by CNOT(control=q0, target=q1)',
+            'Pauli-X on qubit 0, followed by CNOT(control=q0, target=q1)',
+            'Hadamard on both qubit 0 and qubit 1 independently',
+            'CNOT(control=q1, target=q0) without prior superposition'
+        ],
+        correct_option_index=0,
         explanation='Applying H to qubit 0 creates a superposition, then CX(control=0, target=1) entangles them into (|00> + |11>)/sqrt(2).'
     ),
     'challenge-diagnosis': Challenge(
@@ -89,8 +103,28 @@ def grade_challenge(sub: ChallengeSubmission) -> ChallengeResult:
         )
 
     if ch.type == ChallengeType.PREDICTION:
+        if sub.selected_option_index is not None:
+            passed = (sub.selected_option_index == (ch.correct_option_index or 0))
+            score = 1.0 if passed else (0.5 if sub.selected_option_index == 3 else 0.0)
+            misconceptions = ['M1'] if (sub.selected_option_index in [1, 2] and not passed) else []
+            feedback = (
+                'Correct! The Hadamard gate produces a balanced superposition where outcome 0 and outcome 1 each occur with 50% probability.'
+                if passed else
+                'Incorrect. Selecting a definite outcome represents Misconception M1 (treating superposition as hidden classical certainty).'
+            )
+            _update_mastery(ch.concept, passed)
+            return ChallengeResult(
+                challenge_id=ch.id,
+                passed=passed,
+                score=score,
+                feedback=feedback,
+                concept=ch.concept,
+                misconceptions_triggered=misconceptions,
+                next_recommendation='Try Challenge 2: Construct the Bell state.' if passed else 'Review the Superposition lesson and Show Me Why clip.'
+            )
+
         if not sub.prediction:
-            return ChallengeResult(challenge_id=ch.id, passed=False, score=0.0, feedback='No prediction provided.', concept=ch.concept, next_recommendation='Enter probabilities summing to 1.0.')
+            return ChallengeResult(challenge_id=ch.id, passed=False, score=0.0, feedback='No prediction or option selected.', concept=ch.concept, next_recommendation='Select an option or enter probabilities summing to 1.0.')
         p0 = sub.prediction.get('0', 0.0)
         p1 = sub.prediction.get('1', 0.0)
         delta0 = abs(p0 - 0.5)
@@ -118,8 +152,28 @@ def grade_challenge(sub: ChallengeSubmission) -> ChallengeResult:
         )
 
     elif ch.type == ChallengeType.CONSTRUCTION:
+        if sub.selected_option_index is not None:
+            passed = (sub.selected_option_index == (ch.correct_option_index or 0))
+            score = 1.0 if passed else 0.0
+            misconceptions = ['M3'] if not passed else []
+            feedback = (
+                'Outstanding! Applying H on qubit 0 creates a superposition, then CX(control=0, target=1) creates the entangled Bell state (|00> + |11>)/sqrt(2).'
+                if passed else
+                'Incorrect. To generate the entangled Bell state, you must first create a superposition with H on q0, then entangle via CX(control=0, target=1).'
+            )
+            _update_mastery(ch.concept, passed)
+            return ChallengeResult(
+                challenge_id=ch.id,
+                passed=passed,
+                score=score,
+                feedback=feedback,
+                concept=ch.concept,
+                misconceptions_triggered=misconceptions,
+                next_recommendation='Proceed to Challenge 3: Misconception Diagnosis.' if passed else 'Check the gate sequence: H on q0, then CX(control=0, target=1).'
+            )
+
         if not sub.circuit:
-            return ChallengeResult(challenge_id=ch.id, passed=False, score=0.0, feedback='No circuit submitted.', concept=ch.concept, next_recommendation='Build the circuit in the lab.')
+            return ChallengeResult(challenge_id=ch.id, passed=False, score=0.0, feedback='No circuit or option submitted.', concept=ch.concept, next_recommendation='Select an option or build the circuit in the lab.')
         sim_res = run_simulation(sub.circuit, shots=1024)
         p00 = sim_res.probabilities.get('00', 0.0)
         p11 = sim_res.probabilities.get('11', 0.0)
